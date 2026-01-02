@@ -1,0 +1,2598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FurniBill Pro - Furniture Billing Software</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Theme Variables */
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --gradient-start: #6366f1;
+            --gradient-end: #8b5cf6;
+            --accent: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        
+        .dark {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+        }
+        
+        .glass-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .glass-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .glass-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .invoice-print { background: white; padding: 40px; color: #000; }
+        @media print { .no-print { display: none; } }
+        
+        .product-image { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
+        .logo-preview { max-width: 120px; max-height: 60px; object-fit: contain; }
+        
+        .suggestion-item { transition: all 0.15s ease; }
+        .suggestion-item:hover { transform: translateX(4px); }
+        
+        .quick-add-btn { transition: all 0.2s ease; }
+        .quick-add-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--shadow-color); }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .nav-tab {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 2px;
+        }
+        
+        .theme-switch {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            padding: 4px;
+            display: flex;
+            gap: 2px;
+        }
+        
+        .theme-option {
+            padding: 6px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+        
+        .theme-option.active {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table-row {
+            transition: all 0.15s ease;
+        }
+        .table-row:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+        
+        /* Settings Tab Animation */
+        .settings-tab-content {
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Toggle Switch Animation */
+        .toggle-switch {
+            transition: all 0.3s ease;
+        }
+        
+        /* Feature Card Hover */
+        .feature-card {
+            transition: all 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+        
+        /* Pulse animation for sync */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .sync-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo, createContext, useContext } = React;
+
+        // Database Helper Functions with error handling
+        const DB = {
+            get: (key) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : null;
+                } catch (error) {
+                    console.error('DB get error for key:', key, error);
+                    return null;
+                }
+            },
+            set: (key, value) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (error) {
+                    console.error('DB set error for key:', key, error);
+                    // Handle quota exceeded
+                    if (error.name === 'QuotaExceededError') {
+                        alert('Storage is full. Please delete some bills or products.');
+                    }
+                    return false;
+                }
+            },
+            remove: (key) => {
+                try {
+                    localStorage.removeItem(key);
+                    return true;
+                } catch (error) {
+                    console.error('DB remove error for key:', key, error);
+                    return false;
+                }
+            },
+            // Get all registered emails (for debugging)
+            getUsers: () => {
+                const users = DB.get('users') || {};
+                return Object.keys(users);
+            }
+        };
+
+        // Theme Context
+        const ThemeContext = createContext(null);
+        
+        // Auth Context
+        const AuthContext = createContext(null);
+
+        // Image to Base64 converter
+        const imageToBase64 = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        // Theme Provider Component
+        function ThemeProvider({ children }) {
+            const [theme, setTheme] = useState(() => DB.get('theme') || 'system');
+            const [resolvedTheme, setResolvedTheme] = useState('light');
+
+            useEffect(() => {
+                const updateResolvedTheme = () => {
+                    if (theme === 'system') {
+                        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                        setResolvedTheme(systemDark ? 'dark' : 'light');
+                    } else {
+                        setResolvedTheme(theme);
+                    }
+                };
+
+                updateResolvedTheme();
+                
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaQuery.addEventListener('change', updateResolvedTheme);
+                
+                return () => mediaQuery.removeEventListener('change', updateResolvedTheme);
+            }, [theme]);
+
+            useEffect(() => {
+                DB.set('theme', theme);
+                document.documentElement.classList.toggle('dark', resolvedTheme === 'dark');
+            }, [theme, resolvedTheme]);
+
+            return (
+                <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+                    {children}
+                </ThemeContext.Provider>
+            );
+        }
+
+        // Theme Switcher Component
+        function ThemeSwitcher() {
+            const { theme, setTheme } = useContext(ThemeContext);
+            
+            const options = [
+                { value: 'light', icon: '☀️', label: 'Light' },
+                { value: 'dark', icon: '🌙', label: 'Dark' },
+                { value: 'system', icon: '💻', label: 'System' }
+            ];
+
+            return (
+                <div className="theme-switch">
+                    {options.map(opt => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setTheme(opt.value)}
+                            className={`theme-option ${theme === opt.value ? 'active' : ''}`}
+                            title={opt.label}
+                        >
+                            <span className="mr-1">{opt.icon}</span>
+                            <span className="hidden sm:inline">{opt.label}</span>
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [isLoading, setIsLoading] = useState(true);
+            const [lastSync, setLastSync] = useState(new Date());
+
+            // Load session on mount
+            useEffect(() => {
+                const loadSession = () => {
+                    try {
+                        const session = DB.get('currentSession');
+                        if (session && session.email) {
+                            const users = DB.get('users') || {};
+                            if (users[session.email]) {
+                                setCurrentUser({ email: session.email, ...users[session.email] });
+                            } else {
+                                // Session exists but user doesn't - clear invalid session
+                                DB.remove('currentSession');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading session:', error);
+                    }
+                    setIsLoading(false);
+                };
+                
+                loadSession();
+            }, []);
+
+            // Auto-sync every minute
+            useEffect(() => {
+                if (!currentUser) return;
+                
+                const syncInterval = setInterval(() => {
+                    try {
+                        const users = DB.get('users') || {};
+                        if (users[currentUser.email]) {
+                            setCurrentUser({ email: currentUser.email, ...users[currentUser.email] });
+                            setLastSync(new Date());
+                            console.log('Data synced at:', new Date().toLocaleTimeString());
+                        }
+                    } catch (error) {
+                        console.error('Sync error:', error);
+                    }
+                }, 60000); // Sync every 60 seconds (1 minute)
+
+                return () => clearInterval(syncInterval);
+            }, [currentUser?.email]);
+
+            const login = (email, password) => {
+                try {
+                    // Normalize email to lowercase for consistent matching
+                    const normalizedEmail = email.toLowerCase().trim();
+                    const users = DB.get('users') || {};
+                    
+                    // Debug: Log available users
+                    console.log('Login attempt for:', normalizedEmail);
+                    console.log('Available users:', Object.keys(users));
+                    
+                    if (users[normalizedEmail]) {
+                        if (users[normalizedEmail].password === password) {
+                            DB.set('currentSession', { email: normalizedEmail, loginTime: new Date().toISOString() });
+                            setCurrentUser({ email: normalizedEmail, ...users[normalizedEmail] });
+                            setLastSync(new Date());
+                            return { success: true };
+                        } else {
+                            return { success: false, error: 'Incorrect password. Please try again.' };
+                        }
+                    }
+                    return { success: false, error: 'No account found with this email. Please sign up first.' };
+                } catch (error) {
+                    console.error('Login error:', error);
+                    return { success: false, error: 'Login failed. Please try again.' };
+                }
+            };
+
+            const signup = async (userData) => {
+                try {
+                    // Normalize email to lowercase
+                    const normalizedEmail = userData.email.toLowerCase().trim();
+                    const users = DB.get('users') || {};
+                    
+                    // Check if email already exists
+                    if (users[normalizedEmail]) {
+                        return { success: false, error: 'This email is already registered. Please login instead.' };
+                    }
+                    
+                    // Create new user
+                    const newUser = {
+                        password: userData.password,
+                        businessInfo: {
+                            name: userData.businessName,
+                            gstNo: userData.gstNo,
+                            address: userData.address || '',
+                            phone: userData.phone || '',
+                            logo: userData.logo || null
+                        },
+                        products: [],
+                        bills: [],
+                        coupons: [],
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    // Save to database
+                    users[normalizedEmail] = newUser;
+                    DB.set('users', users);
+                    
+                    // Verify the save worked
+                    const verifyUsers = DB.get('users');
+                    if (!verifyUsers[normalizedEmail]) {
+                        return { success: false, error: 'Failed to save account. Please try again.' };
+                    }
+                    
+                    // Create session
+                    DB.set('currentSession', { email: normalizedEmail, loginTime: new Date().toISOString() });
+                    
+                    // Set current user
+                    setCurrentUser({ email: normalizedEmail, ...newUser });
+                    setLastSync(new Date());
+                    
+                    console.log('Signup successful for:', normalizedEmail);
+                    return { success: true };
+                } catch (error) {
+                    console.error('Signup error:', error);
+                    return { success: false, error: 'Signup failed. Please try again.' };
+                }
+            };
+
+            const logout = () => {
+                try {
+                    DB.remove('currentSession');
+                    setCurrentUser(null);
+                    setLastSync(new Date());
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            };
+
+            const updateUserData = (data) => {
+                try {
+                    const users = DB.get('users') || {};
+                    users[currentUser.email] = { ...users[currentUser.email], ...data };
+                    DB.set('users', users);
+                    setCurrentUser({ email: currentUser.email, ...users[currentUser.email] });
+                    setLastSync(new Date());
+                } catch (error) {
+                    console.error('Update error:', error);
+                }
+            };
+
+            // Force sync function
+            const forceSync = () => {
+                if (!currentUser) return;
+                try {
+                    const users = DB.get('users') || {};
+                    if (users[currentUser.email]) {
+                        setCurrentUser({ email: currentUser.email, ...users[currentUser.email] });
+                        setLastSync(new Date());
+                    }
+                } catch (error) {
+                    console.error('Force sync error:', error);
+                }
+            };
+
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-white text-lg font-medium">Loading FurniBill Pro...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <ThemeProvider>
+                    <AuthContext.Provider value={{ currentUser, login, signup, logout, updateUserData, lastSync, forceSync }}>
+                        {currentUser ? <Dashboard /> : <AuthScreen />}
+                    </AuthContext.Provider>
+                </ThemeProvider>
+            );
+        }
+
+        // Auth Screen Component
+        function AuthScreen() {
+            const [isLogin, setIsLogin] = useState(true);
+            const { resolvedTheme } = useContext(ThemeContext);
+            
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4" style={{background: resolvedTheme === 'dark' ? 'linear-gradient(135deg, #1e1b4b, #312e81)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
+                    <div className="absolute top-4 right-4">
+                        <ThemeSwitcher />
+                    </div>
+                    <div className="w-full max-w-md fade-in">
+                        {isLogin ? (
+                            <LoginForm onSwitch={() => setIsLogin(false)} />
+                        ) : (
+                            <SignupForm onSwitch={() => setIsLogin(true)} />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Login Form
+        function LoginForm({ onSwitch }) {
+            const { login } = useContext(AuthContext);
+            const { resolvedTheme } = useContext(ThemeContext);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [showPassword, setShowPassword] = useState(false);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+                
+                // Validate inputs
+                if (!email.trim()) {
+                    setError('Please enter your email address');
+                    setLoading(false);
+                    return;
+                }
+                if (!password) {
+                    setError('Please enter your password');
+                    setLoading(false);
+                    return;
+                }
+                
+                setTimeout(() => {
+                    const result = login(email.toLowerCase().trim(), password);
+                    if (!result.success) {
+                        setError(result.error);
+                    }
+                    setLoading(false);
+                }, 300);
+            };
+
+            return (
+                <div className="glass-card rounded-3xl p-8">
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <span className="text-4xl">🪑</span>
+                        </div>
+                        <h1 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Welcome Back</h1>
+                        <p style={{color: 'var(--text-secondary)'}} className="mt-2">Sign in to FurniBill Pro</p>
+                    </div>
+
+                    {error && (
+                        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center gap-2">
+                            <span>⚠️</span> {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Email Address</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                placeholder="you@company.com"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="glass-input w-full px-4 py-3 pr-12 rounded-xl focus:outline-none transition-all"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-lg opacity-60 hover:opacity-100 transition"
+                                >
+                                    {showPassword ? '🙈' : '👁️'}
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="btn-primary w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Signing in...
+                                </>
+                            ) : (
+                                <>Sign In →</>
+                            )}
+                        </button>
+                    </form>
+
+                    <p className="text-center mt-6" style={{color: 'var(--text-secondary)'}}>
+                        Don't have an account?{' '}
+                        <button onClick={onSwitch} className="text-indigo-500 font-semibold hover:underline">
+                            Create Account
+                        </button>
+                    </p>
+
+                    {/* Show registered accounts count for user awareness */}
+                    {DB.getUsers().length > 0 && (
+                        <p className="text-center mt-4 text-xs" style={{color: 'var(--text-muted)'}}>
+                            💡 {DB.getUsers().length} registered account(s) on this device
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+        // Signup Form
+        function SignupForm({ onSwitch }) {
+            const { signup } = useContext(AuthContext);
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({
+                email: '',
+                password: '',
+                confirmPassword: '',
+                businessName: '',
+                gstNo: '',
+                address: '',
+                phone: '',
+                logo: null
+            });
+            const [logoPreview, setLogoPreview] = useState(null);
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [showPassword, setShowPassword] = useState(false);
+            const fileInputRef = useRef(null);
+
+            const handleLogoChange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        setError('Logo file size should be less than 2MB');
+                        return;
+                    }
+                    try {
+                        const base64 = await imageToBase64(file);
+                        setFormData({ ...formData, logo: base64 });
+                        setLogoPreview(base64);
+                        setError('');
+                    } catch (err) {
+                        setError('Failed to load image. Please try another file.');
+                    }
+                }
+            };
+
+            const validateEmail = (email) => {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            };
+
+            const handleStep1 = (e) => {
+                e.preventDefault();
+                setError('');
+                
+                // Validate email format
+                if (!validateEmail(formData.email)) {
+                    setError('Please enter a valid email address');
+                    return;
+                }
+                
+                if (formData.password !== formData.confirmPassword) {
+                    setError('Passwords do not match');
+                    return;
+                }
+                if (formData.password.length < 6) {
+                    setError('Password must be at least 6 characters');
+                    return;
+                }
+                setStep(2);
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+                setSuccess('');
+                
+                // Validate business name
+                if (!formData.businessName.trim()) {
+                    setError('Business name is required');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Validate GST number
+                if (!formData.gstNo.trim()) {
+                    setError('GST number is required');
+                    setLoading(false);
+                    return;
+                }
+                
+                const result = await signup({
+                    ...formData,
+                    email: formData.email.toLowerCase().trim()
+                });
+                
+                if (result.success) {
+                    setSuccess('Account created successfully! Redirecting...');
+                } else {
+                    setError(result.error);
+                }
+                setLoading(false);
+            };
+
+            return (
+                <div className="glass-card rounded-3xl p-8 max-h-[90vh] overflow-y-auto">
+                    <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                            <span className="text-3xl">🪑</span>
+                        </div>
+                        <h1 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Create Account</h1>
+                        <p style={{color: 'var(--text-secondary)'}} className="mt-1">Step {step} of 2</p>
+                        <div className="flex gap-2 justify-center mt-3">
+                            <div className={`h-1.5 w-16 rounded-full ${step >= 1 ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                            <div className={`h-1.5 w-16 rounded-full ${step >= 2 ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center gap-2">
+                            <span>⚠️</span> {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-xl text-sm flex items-center gap-2">
+                            <span>✅</span> {success}
+                        </div>
+                    )}
+
+                    {step === 1 ? (
+                        <form onSubmit={handleStep1} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Email Address *</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value.toLowerCase()})}
+                                    className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                    placeholder="you@company.com"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Password *</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                        className="glass-input w-full px-4 py-3 pr-12 rounded-xl focus:outline-none transition-all"
+                                        placeholder="Min 6 characters"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-lg opacity-60 hover:opacity-100 transition"
+                                    >
+                                        {showPassword ? '🙈' : '👁️'}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Confirm Password *</label>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={formData.confirmPassword}
+                                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                                    className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                    placeholder="Confirm password"
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="btn-primary w-full py-3 text-white font-semibold rounded-xl">
+                                Continue →
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Logo Upload */}
+                            <div className="text-center">
+                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Business Logo</label>
+                                <div 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-28 h-28 mx-auto glass-input rounded-2xl flex items-center justify-center cursor-pointer hover:border-indigo-500 transition-all overflow-hidden"
+                                >
+                                    {logoPreview ? (
+                                        <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-2" />
+                                    ) : (
+                                        <div className="text-center" style={{color: 'var(--text-muted)'}}>
+                                            <span className="text-3xl">📷</span>
+                                            <p className="text-xs mt-1">Upload Logo</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+                                <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>PNG, JPG up to 2MB (Optional)</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Business Name *</label>
+                                <input
+                                    type="text"
+                                    value={formData.businessName}
+                                    onChange={(e) => setFormData({...formData, businessName: e.target.value})}
+                                    className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                    placeholder="Your Furniture Store"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>GST Number *</label>
+                                <input
+                                    type="text"
+                                    value={formData.gstNo}
+                                    onChange={(e) => setFormData({...formData, gstNo: e.target.value})}
+                                    className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                    placeholder="22AAAAA0000A1Z5"
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Phone</label>
+                                    <input
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                        className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                        placeholder="+91 98765 43210"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Address</label>
+                                    <input
+                                        type="text"
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                                        className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
+                                        placeholder="City, State"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 glass-input rounded-xl font-semibold" style={{color: 'var(--text-primary)'}}>
+                                    ← Back
+                                </button>
+                                <button type="submit" disabled={loading} className="btn-primary flex-1 py-3 text-white font-semibold rounded-xl disabled:opacity-50">
+                                    {loading ? 'Creating...' : 'Create Account'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    <p className="text-center mt-4" style={{color: 'var(--text-secondary)'}}>
+                        Already have an account?{' '}
+                        <button onClick={onSwitch} className="text-indigo-500 font-semibold hover:underline">
+                            Sign In
+                        </button>
+                    </p>
+                </div>
+            );
+        }
+
+        // Main Dashboard Component
+        function Dashboard() {
+            const { currentUser, logout, updateUserData, lastSync, forceSync } = useContext(AuthContext);
+            const { resolvedTheme } = useContext(ThemeContext);
+            const [currentView, setCurrentView] = useState('dashboard');
+            const [isBillingMode, setIsBillingMode] = useState(false);
+            const [syncStatus, setSyncStatus] = useState('synced');
+
+            const products = currentUser.products || [];
+            const bills = currentUser.bills || [];
+            const coupons = currentUser.coupons || [];
+            const businessInfo = currentUser.businessInfo;
+
+            // Manual sync handler
+            const handleSync = () => {
+                setSyncStatus('syncing');
+                setTimeout(() => {
+                    forceSync();
+                    setSyncStatus('synced');
+                }, 500);
+            };
+
+            const setProducts = (newProducts) => updateUserData({ products: newProducts });
+            const setBills = (newBills) => updateUserData({ bills: newBills });
+            const setCoupons = (newCoupons) => updateUserData({ coupons: newCoupons });
+
+            const addProduct = (product) => setProducts([...products, { ...product, id: Date.now() }]);
+            const deleteProduct = (id) => setProducts(products.filter(p => p.id !== id));
+            const addBill = (bill) => setBills([...bills, { ...bill, id: Date.now(), date: new Date().toISOString() }]);
+            const deleteBill = (id) => setBills(bills.filter(b => b.id !== id));
+            const addCoupon = (coupon) => setCoupons([...coupons, { ...coupon, id: Date.now() }]);
+            const deleteCoupon = (id) => setCoupons(coupons.filter(c => c.id !== id));
+
+            if (isBillingMode) {
+                return (
+                    <BillingMode 
+                        businessInfo={businessInfo}
+                        products={products}
+                        coupons={coupons}
+                        onComplete={(bill) => { addBill(bill); setIsBillingMode(false); }}
+                        onCancel={() => setIsBillingMode(false)}
+                    />
+                );
+            }
+
+            const navItems = [
+                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+                { id: 'products', label: 'Products', icon: '📦' },
+                { id: 'coupons', label: 'Coupons', icon: '🏷️' },
+                { id: 'bills', label: 'Bills', icon: '🧾' },
+                { id: 'reports', label: 'Reports', icon: '📈' },
+                { id: 'settings', label: 'Settings', icon: '⚙️' }
+            ];
+
+            return (
+                <div className="min-h-screen" style={{background: resolvedTheme === 'dark' ? 'linear-gradient(135deg, #0f172a, #1e1b4b)' : 'linear-gradient(135deg, #eef2ff, #e0e7ff)'}}>
+                    <nav className="glass-card border-0 border-b sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto px-4 py-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    {businessInfo.logo ? (
+                                        <img src={businessInfo.logo} alt="Logo" className="w-10 h-10 object-contain rounded-xl" style={{background: 'var(--bg-tertiary)'}} />
+                                    ) : (
+                                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                                            <span className="text-xl">🪑</span>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <h1 className="text-lg font-bold" style={{color: 'var(--text-primary)'}}>{businessInfo.name}</h1>
+                                        <p className="text-xs" style={{color: 'var(--text-muted)'}}>GST: {businessInfo.gstNo}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    {/* Sync Status */}
+                                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{background: 'var(--bg-tertiary)'}}>
+                                        <button 
+                                            onClick={handleSync} 
+                                            className={`text-sm ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}
+                                            title="Click to sync"
+                                        >
+                                            🔄
+                                        </button>
+                                        <span className="text-xs" style={{color: 'var(--text-muted)'}}>
+                                            {lastSync ? lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
+                                        </span>
+                                    </div>
+                                    <ThemeSwitcher />
+                                    <button onClick={logout} className="px-3 py-2 text-sm rounded-lg transition-all hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500" title="Logout">
+                                        🚪 <span className="hidden sm:inline">Logout</span>
+                                    </button>
+                                </div>
+                            </div>
+                            {/* Navigation Tabs */}
+                            <div className="flex gap-1 mt-3 overflow-x-auto pb-1">
+                                {navItems.map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setCurrentView(item.id)}
+                                        className={`nav-tab px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
+                                            currentView === item.id 
+                                                ? 'active bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
+                                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                        }`}
+                                        style={{color: currentView === item.id ? '' : 'var(--text-secondary)'}}
+                                    >
+                                        <span className="mr-1">{item.icon}</span> {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-7xl mx-auto px-4 py-6 fade-in">
+                        {currentView === 'dashboard' && (
+                            <DashboardView products={products} bills={bills} onStartBilling={() => setIsBillingMode(true)} />
+                        )}
+                        {currentView === 'products' && (
+                            <ProductManagement products={products} onAdd={addProduct} onDelete={deleteProduct} />
+                        )}
+                        {currentView === 'coupons' && (
+                            <CouponManagement coupons={coupons} onAdd={addCoupon} onDelete={deleteCoupon} />
+                        )}
+                        {currentView === 'bills' && (
+                            <BillHistory bills={bills} businessInfo={businessInfo} onDelete={deleteBill} />
+                        )}
+                        {currentView === 'reports' && (
+                            <Reports bills={bills} />
+                        )}
+                        {currentView === 'settings' && (
+                            <Settings />
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        // Settings Component
+        function Settings() {
+            const { currentUser, updateUserData, logout } = useContext(AuthContext);
+            const { theme, setTheme, resolvedTheme } = useContext(ThemeContext);
+            const [activeTab, setActiveTab] = useState('profile');
+            const [businessForm, setBusinessForm] = useState({
+                name: currentUser.businessInfo.name || '',
+                gstNo: currentUser.businessInfo.gstNo || '',
+                address: currentUser.businessInfo.address || '',
+                phone: currentUser.businessInfo.phone || '',
+                logo: currentUser.businessInfo.logo || null
+            });
+            const [logoPreview, setLogoPreview] = useState(currentUser.businessInfo.logo);
+            const [saveSuccess, setSaveSuccess] = useState(false);
+            const [invoiceSettings, setInvoiceSettings] = useState(() => {
+                return DB.get(`invoiceSettings_${currentUser.email}`) || {
+                    showLogo: true,
+                    showGst: true,
+                    showTransport: true,
+                    footerText: 'Thank you for your business! 🙏',
+                    primaryColor: '#6366f1'
+                };
+            });
+            const [deleteConfirm, setDeleteConfirm] = useState(false);
+            const fileInputRef = useRef(null);
+
+            const handleLogoChange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Logo file size should be less than 2MB');
+                        return;
+                    }
+                    try {
+                        const base64 = await imageToBase64(file);
+                        setBusinessForm({ ...businessForm, logo: base64 });
+                        setLogoPreview(base64);
+                    } catch (err) {
+                        alert('Failed to load image');
+                    }
+                }
+            };
+
+            const saveBusinessInfo = () => {
+                updateUserData({
+                    businessInfo: {
+                        ...currentUser.businessInfo,
+                        ...businessForm
+                    }
+                });
+                setSaveSuccess(true);
+                setTimeout(() => setSaveSuccess(false), 3000);
+            };
+
+            const saveInvoiceSettings = () => {
+                DB.set(`invoiceSettings_${currentUser.email}`, invoiceSettings);
+                setSaveSuccess(true);
+                setTimeout(() => setSaveSuccess(false), 3000);
+            };
+
+            const handleDeleteAccount = () => {
+                const users = DB.get('users') || {};
+                delete users[currentUser.email];
+                DB.set('users', users);
+                logout();
+            };
+
+            const exportData = () => {
+                const data = {
+                    businessInfo: currentUser.businessInfo,
+                    products: currentUser.products,
+                    bills: currentUser.bills,
+                    coupons: currentUser.coupons,
+                    exportDate: new Date().toISOString()
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `FurniBill_Backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const tabs = [
+                { id: 'profile', label: 'Business Profile', icon: '🏢' },
+                { id: 'customize', label: 'Customization', icon: '🎨' },
+                { id: 'invoice', label: 'Invoice Settings', icon: '🧾' },
+                { id: 'data', label: 'Data & Backup', icon: '💾' },
+                { id: 'about', label: 'About', icon: 'ℹ️' }
+            ];
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div>
+                        <h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Settings</h2>
+                        <p style={{color: 'var(--text-secondary)'}}>Manage your account and preferences</p>
+                    </div>
+
+                    {saveSuccess && (
+                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center gap-2">
+                            <span>✅</span> Settings saved successfully!
+                        </div>
+                    )}
+
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        {/* Sidebar */}
+                        <div className="lg:w-64 flex-shrink-0">
+                            <div className="glass-card rounded-2xl p-4 space-y-1">
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-all ${
+                                            activeTab === tab.id 
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
+                                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                        }`}
+                                        style={{color: activeTab === tab.id ? '' : 'var(--text-secondary)'}}
+                                    >
+                                        <span>{tab.icon}</span>
+                                        <span>{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 settings-tab-content">
+                            {/* Business Profile Tab */}
+                            {activeTab === 'profile' && (
+                                <div className="glass-card rounded-2xl p-6 space-y-6">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                        <span>🏢</span> Business Profile
+                                    </h3>
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-6">
+                                        {/* Logo */}
+                                        <div className="flex flex-col items-center">
+                                            <div 
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="w-32 h-32 glass-input rounded-2xl flex items-center justify-center cursor-pointer hover:border-indigo-500 transition-all overflow-hidden"
+                                            >
+                                                {logoPreview ? (
+                                                    <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-2" />
+                                                ) : (
+                                                    <div className="text-center" style={{color: 'var(--text-muted)'}}>
+                                                        <span className="text-4xl">📷</span>
+                                                        <p className="text-xs mt-2">Upload Logo</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+                                            {logoPreview && (
+                                                <button 
+                                                    onClick={() => { setBusinessForm({...businessForm, logo: null}); setLogoPreview(null); }}
+                                                    className="mt-2 text-sm text-red-500 hover:underline"
+                                                >
+                                                    Remove Logo
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Form */}
+                                        <div className="flex-1 space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Business Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={businessForm.name}
+                                                    onChange={(e) => setBusinessForm({...businessForm, name: e.target.value})}
+                                                    className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>GST Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={businessForm.gstNo}
+                                                    onChange={(e) => setBusinessForm({...businessForm, gstNo: e.target.value})}
+                                                    className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Phone</label>
+                                                    <input
+                                                        type="tel"
+                                                        value={businessForm.phone}
+                                                        onChange={(e) => setBusinessForm({...businessForm, phone: e.target.value})}
+                                                        className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Address</label>
+                                                    <input
+                                                        type="text"
+                                                        value={businessForm.address}
+                                                        onChange={(e) => setBusinessForm({...businessForm, address: e.target.value})}
+                                                        className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end">
+                                        <button onClick={saveBusinessInfo} className="btn-primary px-6 py-3 text-white rounded-xl font-semibold">
+                                            💾 Save Changes
+                                        </button>
+                                    </div>
+
+                                    {/* Account Info */}
+                                    <div className="pt-6 border-t" style={{borderColor: 'var(--border-color)'}}>
+                                        <h4 className="font-semibold mb-4" style={{color: 'var(--text-primary)'}}>Account Information</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="p-4 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>Email Address</p>
+                                                <p className="font-medium" style={{color: 'var(--text-primary)'}}>{currentUser.email}</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>Member Since</p>
+                                                <p className="font-medium" style={{color: 'var(--text-primary)'}}>
+                                                    {currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : 'N/A'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Customization Tab */}
+                            {activeTab === 'customize' && (
+                                <div className="space-y-6">
+                                    <div className="glass-card rounded-2xl p-6">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-6" style={{color: 'var(--text-primary)'}}>
+                                            <span>🎨</span> Appearance
+                                        </h3>
+                                        
+                                        <div className="space-y-6">
+                                            {/* Theme Selection */}
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-3" style={{color: 'var(--text-primary)'}}>Theme</label>
+                                                <div className="grid grid-cols-3 gap-4">
+                                                    {[
+                                                        { value: 'light', icon: '☀️', label: 'Light', desc: 'Bright and clean' },
+                                                        { value: 'dark', icon: '🌙', label: 'Dark', desc: 'Easy on the eyes' },
+                                                        { value: 'system', icon: '💻', label: 'System', desc: 'Match your OS' }
+                                                    ].map(opt => (
+                                                        <button
+                                                            key={opt.value}
+                                                            onClick={() => setTheme(opt.value)}
+                                                            className={`p-4 rounded-xl border-2 transition-all ${
+                                                                theme === opt.value 
+                                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' 
+                                                                    : 'border-transparent hover:border-gray-300'
+                                                            }`}
+                                                            style={{background: theme === opt.value ? '' : 'var(--bg-tertiary)'}}
+                                                        >
+                                                            <span className="text-3xl">{opt.icon}</span>
+                                                            <p className="font-semibold mt-2" style={{color: 'var(--text-primary)'}}>{opt.label}</p>
+                                                            <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>{opt.desc}</p>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Current Theme Info */}
+                                            <div className="p-4 rounded-xl flex items-center justify-between" style={{background: 'var(--bg-tertiary)'}}>
+                                                <div>
+                                                    <p className="text-sm" style={{color: 'var(--text-muted)'}}>Current Active Theme</p>
+                                                    <p className="font-semibold text-lg" style={{color: 'var(--text-primary)'}}>
+                                                        {resolvedTheme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-16 h-8 rounded-full p-1 transition-all ${resolvedTheme === 'dark' ? 'bg-indigo-600' : 'bg-gray-300'}`}>
+                                                    <div className={`w-6 h-6 rounded-full bg-white shadow transition-all ${resolvedTheme === 'dark' ? 'translate-x-8' : ''}`}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Quick Stats Customization */}
+                                    <div className="glass-card rounded-2xl p-6">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4" style={{color: 'var(--text-primary)'}}>
+                                            <span>📊</span> Dashboard Stats
+                                        </h3>
+                                        <p className="text-sm mb-4" style={{color: 'var(--text-muted)'}}>
+                                            Your dashboard shows quick stats for products, bills, and revenue.
+                                        </p>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            <div className="p-3 rounded-xl text-center" style={{background: 'var(--bg-tertiary)'}}>
+                                                <span className="text-2xl">📦</span>
+                                                <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>Products</p>
+                                                <p className="font-bold" style={{color: 'var(--text-primary)'}}>{currentUser.products?.length || 0}</p>
+                                            </div>
+                                            <div className="p-3 rounded-xl text-center" style={{background: 'var(--bg-tertiary)'}}>
+                                                <span className="text-2xl">🧾</span>
+                                                <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>Bills</p>
+                                                <p className="font-bold" style={{color: 'var(--text-primary)'}}>{currentUser.bills?.length || 0}</p>
+                                            </div>
+                                            <div className="p-3 rounded-xl text-center" style={{background: 'var(--bg-tertiary)'}}>
+                                                <span className="text-2xl">🏷️</span>
+                                                <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>Coupons</p>
+                                                <p className="font-bold" style={{color: 'var(--text-primary)'}}>{currentUser.coupons?.length || 0}</p>
+                                            </div>
+                                            <div className="p-3 rounded-xl text-center" style={{background: 'var(--bg-tertiary)'}}>
+                                                <span className="text-2xl">💰</span>
+                                                <p className="text-xs mt-1" style={{color: 'var(--text-muted)'}}>Revenue</p>
+                                                <p className="font-bold text-emerald-500">₹{(currentUser.bills?.reduce((s,b) => s + b.total, 0) || 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Invoice Settings Tab */}
+                            {activeTab === 'invoice' && (
+                                <div className="glass-card rounded-2xl p-6 space-y-6">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                        <span>🧾</span> Invoice Settings
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        {/* Toggle Options */}
+                                        <div className="space-y-3">
+                                            {[
+                                                { key: 'showLogo', label: 'Show Logo on Invoice', desc: 'Display your business logo' },
+                                                { key: 'showGst', label: 'Show GST Breakdown', desc: 'Show itemized GST on each product' },
+                                                { key: 'showTransport', label: 'Show Transport Charges', desc: 'Display transport cost separately' }
+                                            ].map(option => (
+                                                <div key={option.key} className="flex items-center justify-between p-4 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                    <div>
+                                                        <p className="font-medium" style={{color: 'var(--text-primary)'}}>{option.label}</p>
+                                                        <p className="text-sm" style={{color: 'var(--text-muted)'}}>{option.desc}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setInvoiceSettings({...invoiceSettings, [option.key]: !invoiceSettings[option.key]})}
+                                                        className={`w-14 h-7 rounded-full p-1 transition-all ${invoiceSettings[option.key] ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                                                    >
+                                                        <div className={`w-5 h-5 rounded-full bg-white shadow transition-all ${invoiceSettings[option.key] ? 'translate-x-7' : ''}`}></div>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Footer Text */}
+                                        <div>
+                                            <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Invoice Footer Text</label>
+                                            <textarea
+                                                value={invoiceSettings.footerText}
+                                                onChange={(e) => setInvoiceSettings({...invoiceSettings, footerText: e.target.value})}
+                                                className="glass-input w-full px-4 py-3 rounded-xl focus:outline-none resize-none"
+                                                rows="2"
+                                                placeholder="Thank you message..."
+                                            />
+                                        </div>
+
+                                        {/* Primary Color */}
+                                        <div>
+                                            <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Invoice Accent Color</label>
+                                            <div className="flex gap-3">
+                                                {['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'].map(color => (
+                                                    <button
+                                                        key={color}
+                                                        onClick={() => setInvoiceSettings({...invoiceSettings, primaryColor: color})}
+                                                        className={`w-10 h-10 rounded-xl transition-all ${invoiceSettings.primaryColor === color ? 'ring-4 ring-offset-2 ring-gray-400' : ''}`}
+                                                        style={{background: color}}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end">
+                                        <button onClick={saveInvoiceSettings} className="btn-primary px-6 py-3 text-white rounded-xl font-semibold">
+                                            💾 Save Invoice Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Data & Backup Tab */}
+                            {activeTab === 'data' && (
+                                <div className="space-y-6">
+                                    <div className="glass-card rounded-2xl p-6">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4" style={{color: 'var(--text-primary)'}}>
+                                            <span>💾</span> Data Management
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                            <div className="p-4 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>Total Products</p>
+                                                <p className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>{currentUser.products?.length || 0}</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>Total Bills</p>
+                                                <p className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>{currentUser.bills?.length || 0}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={exportData}
+                                                className="w-full flex items-center justify-between p-4 rounded-xl transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                style={{background: 'var(--bg-tertiary)'}}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">📥</span>
+                                                    <div className="text-left">
+                                                        <p className="font-semibold" style={{color: 'var(--text-primary)'}}>Export Data</p>
+                                                        <p className="text-sm" style={{color: 'var(--text-muted)'}}>Download all your data as JSON</p>
+                                                    </div>
+                                                </div>
+                                                <span style={{color: 'var(--text-muted)'}}>→</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Danger Zone */}
+                                    <div className="glass-card rounded-2xl p-6 border-2 border-red-200 dark:border-red-800">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-red-600">
+                                            <span>⚠️</span> Danger Zone
+                                        </h3>
+                                        <p className="text-sm mb-4" style={{color: 'var(--text-secondary)'}}>
+                                            These actions are irreversible. Please be careful.
+                                        </p>
+                                        
+                                        <button
+                                            onClick={() => setDeleteConfirm(true)}
+                                            className="w-full flex items-center justify-between p-4 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl">🗑️</span>
+                                                <div className="text-left">
+                                                    <p className="font-semibold text-red-600">Delete Account</p>
+                                                    <p className="text-sm text-red-500">Permanently delete your account and all data</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-red-500">→</span>
+                                        </button>
+                                    </div>
+
+                                    <ConfirmModal
+                                        isOpen={deleteConfirm}
+                                        title="Delete Account?"
+                                        message="This will permanently delete your account and all associated data including products, bills, and coupons. This action cannot be undone."
+                                        onConfirm={handleDeleteAccount}
+                                        onCancel={() => setDeleteConfirm(false)}
+                                        confirmText="Delete Forever"
+                                        confirmColor="red"
+                                    />
+                                </div>
+                            )}
+
+                            {/* About Tab */}
+                            {activeTab === 'about' && (
+                                <div className="space-y-6">
+                                    <div className="glass-card rounded-2xl p-6 text-center">
+                                        <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                            <span className="text-5xl">🪑</span>
+                                        </div>
+                                        <h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>FurniBill Pro</h2>
+                                        <p className="text-lg" style={{color: 'var(--text-secondary)'}}>Professional Furniture Billing Software</p>
+                                        <p className="mt-2 text-sm" style={{color: 'var(--text-muted)'}}>Version 2.0.0</p>
+                                    </div>
+
+                                    <div className="glass-card rounded-2xl p-6">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4" style={{color: 'var(--text-primary)'}}>
+                                            <span>✨</span> Features
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {[
+                                                { icon: '⚡', title: 'Quick Billing', desc: 'Fast and efficient billing with product search' },
+                                                { icon: '📦', title: 'Product Management', desc: 'Add unlimited products with images' },
+                                                { icon: '🏷️', title: 'Discount & Coupons', desc: 'Create and apply discount coupons' },
+                                                { icon: '🧾', title: 'Professional Invoices', desc: 'Generate PDF invoices with your branding' },
+                                                { icon: '📊', title: 'Reports & Analytics', desc: 'Track monthly and annual performance' },
+                                                { icon: '🌙', title: 'Dark Mode', desc: 'Easy on the eyes with theme options' },
+                                                { icon: '💾', title: 'Data Backup', desc: 'Export all your data anytime' },
+                                                { icon: '🔒', title: 'Secure Login', desc: 'Your data is private and secure' }
+                                            ].map((feature, i) => (
+                                                <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                    <span className="text-2xl">{feature.icon}</span>
+                                                    <div>
+                                                        <p className="font-semibold" style={{color: 'var(--text-primary)'}}>{feature.title}</p>
+                                                        <p className="text-sm" style={{color: 'var(--text-muted)'}}>{feature.desc}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="glass-card rounded-2xl p-6">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4" style={{color: 'var(--text-primary)'}}>
+                                            <span>📞</span> Support & Contact
+                                        </h3>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3 p-3 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                <span className="text-xl">📧</span>
+                                                <div>
+                                                    <p className="text-sm" style={{color: 'var(--text-muted)'}}>Email Support</p>
+                                                    <p className="font-medium" style={{color: 'var(--text-primary)'}}>support@furnibill.pro</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                <span className="text-xl">🌐</span>
+                                                <div>
+                                                    <p className="text-sm" style={{color: 'var(--text-muted)'}}>Website</p>
+                                                    <p className="font-medium" style={{color: 'var(--text-primary)'}}>www.furnibill.pro</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="glass-card rounded-2xl p-6">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-4" style={{color: 'var(--text-primary)'}}>
+                                            <span>❓</span> FAQ
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {[
+                                                { q: 'Where is my data stored?', a: 'Your data is stored locally in your browser. It stays on your device and is not sent to any server.' },
+                                                { q: 'Can I use this on multiple devices?', a: 'Currently, data is stored per device. Use the Export feature to backup and transfer data.' },
+                                                { q: 'Is my data secure?', a: 'Yes! Your data is protected by your password and stored only on your device.' },
+                                                { q: 'How do I backup my data?', a: 'Go to Settings > Data & Backup > Export Data to download a JSON backup file.' }
+                                            ].map((faq, i) => (
+                                                <div key={i} className="p-4 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                                    <p className="font-semibold" style={{color: 'var(--text-primary)'}}>{faq.q}</p>
+                                                    <p className="text-sm mt-1" style={{color: 'var(--text-secondary)'}}>{faq.a}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center py-4" style={{color: 'var(--text-muted)'}}>
+                                        <p>Made with ❤️ for Furniture Businesses</p>
+                                        <p className="text-sm mt-1">© 2024 FurniBill Pro. All rights reserved.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Dashboard View Component
+        function DashboardView({ products, bills, onStartBilling }) {
+            const today = new Date();
+            const thisMonth = bills.filter(b => new Date(b.date).getMonth() === today.getMonth());
+            const todayBills = bills.filter(b => new Date(b.date).toDateString() === today.toDateString());
+
+            const monthlyTotal = thisMonth.reduce((sum, b) => sum + b.total, 0);
+            const todayTotal = todayBills.reduce((sum, b) => sum + b.total, 0);
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Dashboard</h2>
+                            <p style={{color: 'var(--text-secondary)'}}>Welcome back! Here's your overview.</p>
+                        </div>
+                        <button
+                            onClick={onStartBilling}
+                            disabled={products.length === 0}
+                            className={`px-6 py-4 rounded-2xl font-semibold text-lg transition-all flex items-center gap-3 shadow-lg ${
+                                products.length === 0
+                                    ? 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed text-gray-500'
+                                    : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:shadow-xl hover:scale-105'
+                            }`}
+                        >
+                            <span className="text-2xl">⚡</span> Start Quick Billing
+                        </button>
+                    </div>
+
+                    {products.length === 0 && (
+                        <div className="glass-card rounded-2xl p-4 border-l-4 border-amber-500 flex items-center gap-3">
+                            <span className="text-2xl">💡</span>
+                            <p style={{color: 'var(--text-secondary)'}}>Add products first to start billing. Go to the <strong>Products</strong> tab.</p>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCard icon="📦" title="Products" value={products.length} color="from-blue-500 to-cyan-500" />
+                        <StatCard icon="🧾" title="Total Bills" value={bills.length} color="from-violet-500 to-purple-500" />
+                        <StatCard icon="📅" title="Today" value={`₹${todayTotal.toLocaleString()}`} color="from-emerald-500 to-green-500" />
+                        <StatCard icon="📊" title="This Month" value={`₹${monthlyTotal.toLocaleString()}`} color="from-orange-500 to-amber-500" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="glass-card rounded-2xl p-6">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                <span>📋</span> Recent Bills
+                            </h3>
+                            {bills.length === 0 ? (
+                                <p style={{color: 'var(--text-muted)'}}>No bills yet. Start billing to see history.</p>
+                            ) : (
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {bills.slice(-5).reverse().map(bill => (
+                                        <div key={bill.id} className="flex justify-between items-center p-3 rounded-xl table-row" style={{background: 'var(--bg-tertiary)'}}>
+                                            <div>
+                                                <p className="font-medium" style={{color: 'var(--text-primary)'}}>#{bill.id.toString().slice(-6)}</p>
+                                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>{new Date(bill.date).toLocaleDateString()}</p>
+                                            </div>
+                                            <p className="text-emerald-500 font-bold">₹{bill.total.toLocaleString()}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="glass-card rounded-2xl p-6">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                <span>🏷️</span> Quick Products
+                            </h3>
+                            {products.length === 0 ? (
+                                <p style={{color: 'var(--text-muted)'}}>No products added yet.</p>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                    {products.slice(0, 6).map(product => (
+                                        <div key={product.id} className="p-3 rounded-xl" style={{background: 'var(--bg-tertiary)'}}>
+                                            <div className="flex items-center gap-2">
+                                                {product.image ? (
+                                                    <img src={product.image} alt="" className="w-10 h-10 object-cover rounded-lg" />
+                                                ) : (
+                                                    <span className="text-2xl">{product.emoji || '📦'}</span>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium truncate text-sm" style={{color: 'var(--text-primary)'}}>{product.name}</p>
+                                                    <p className="text-emerald-500 text-sm font-semibold">₹{product.price.toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function StatCard({ icon, title, value, color }) {
+            return (
+                <div className={`stat-card bg-gradient-to-br ${color} rounded-2xl p-5 shadow-lg`}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-white/80 text-sm font-medium">{title}</p>
+                            <p className="text-2xl font-bold text-white mt-1">{value}</p>
+                        </div>
+                        <span className="text-3xl opacity-80">{icon}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // Product Management Component
+        function ProductManagement({ products, onAdd, onDelete }) {
+            const [showForm, setShowForm] = useState(false);
+            const [form, setForm] = useState({ number: '', name: '', image: null, emoji: '🪑', price: '', gst: '18', measurement: '', transport: '0' });
+            const [imagePreview, setImagePreview] = useState(null);
+            const fileInputRef = useRef(null);
+
+            const handleImageChange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 1 * 1024 * 1024) { alert('Image size should be less than 1MB'); return; }
+                    const base64 = await imageToBase64(file);
+                    setForm({ ...form, image: base64, emoji: '' });
+                    setImagePreview(base64);
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (products.some(p => p.number === form.number)) { alert('Product number already exists!'); return; }
+                onAdd({ ...form, price: parseFloat(form.price), gst: parseFloat(form.gst), transport: parseFloat(form.transport) });
+                setForm({ number: '', name: '', image: null, emoji: '🪑', price: '', gst: '18', measurement: '', transport: '0' });
+                setImagePreview(null);
+                setShowForm(false);
+            };
+
+            const emojiOptions = ['🪑', '🛋️', '🛏️', '🪞', '🚪', '🗄️', '📦', '🪵', '🎨', '💺', '🪔', '🏠', '🛒', '🧰'];
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Products</h2>
+                            <p style={{color: 'var(--text-secondary)'}}>{products.length} products in inventory</p>
+                        </div>
+                        <button onClick={() => setShowForm(!showForm)} className={`px-4 py-2 rounded-xl font-medium transition-all ${showForm ? 'bg-gray-200 dark:bg-gray-700' : 'btn-primary text-white'}`}>
+                            {showForm ? '✕ Cancel' : '+ Add Product'}
+                        </button>
+                    </div>
+
+                    {showForm && (
+                        <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                <div className="md:row-span-2">
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Image</label>
+                                    <div onClick={() => fileInputRef.current?.click()} className="w-full h-28 glass-input rounded-xl flex items-center justify-center cursor-pointer hover:border-indigo-500 transition-all overflow-hidden">
+                                        {imagePreview ? <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" /> : (
+                                            <div className="text-center" style={{color: 'var(--text-muted)'}}>
+                                                <span className="text-2xl">📷</span>
+                                                <p className="text-xs mt-1">Upload</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                                    <div className="flex gap-1 flex-wrap mt-2">
+                                        {emojiOptions.map(emoji => (
+                                            <button key={emoji} type="button" onClick={() => { setForm({...form, emoji, image: null}); setImagePreview(null); }}
+                                                className={`w-7 h-7 rounded-lg text-sm ${form.emoji === emoji && !form.image ? 'bg-indigo-500' : ''} hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition`}
+                                                style={{background: form.emoji === emoji && !form.image ? '' : 'var(--bg-tertiary)'}}
+                                            >{emoji}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Product # *</label>
+                                    <input type="text" value={form.number} onChange={(e) => setForm({...form, number: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="e.g., 001" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Name *</label>
+                                    <input type="text" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="Wooden Chair" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Price (₹) *</label>
+                                    <input type="number" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="5000" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>GST %</label>
+                                    <select value={form.gst} onChange={(e) => setForm({...form, gst: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none">
+                                        <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Measurement</label>
+                                    <input type="text" value={form.measurement} onChange={(e) => setForm({...form, measurement: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="4x3x2 ft" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Transport (₹)</label>
+                                    <input type="number" value={form.transport} onChange={(e) => setForm({...form, transport: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="500" />
+                                </div>
+                            </div>
+                            <button type="submit" className="btn-primary mt-4 px-6 py-2 text-white rounded-xl font-medium">Add Product</button>
+                        </form>
+                    )}
+
+                    <div className="glass-card rounded-2xl overflow-hidden">
+                        {products.length === 0 ? (
+                            <div className="p-12 text-center" style={{color: 'var(--text-muted)'}}>
+                                <span className="text-5xl">📦</span>
+                                <p className="mt-3 font-medium">No products yet</p>
+                                <p className="text-sm">Click "Add Product" to get started</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead style={{background: 'var(--bg-tertiary)'}}>
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>No.</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Product</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Price</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>GST</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Size</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Transport</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {products.map(product => (
+                                            <tr key={product.id} className="table-row border-t" style={{borderColor: 'var(--border-color)'}}>
+                                                <td className="px-4 py-3 font-mono font-semibold" style={{color: 'var(--text-primary)'}}>{product.number}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        {product.image ? <img src={product.image} alt="" className="w-10 h-10 object-cover rounded-lg" /> : <span className="text-xl">{product.emoji || '📦'}</span>}
+                                                        <span style={{color: 'var(--text-primary)'}}>{product.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-emerald-500 font-semibold">₹{product.price.toLocaleString()}</td>
+                                                <td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">{product.gst}%</span></td>
+                                                <td className="px-4 py-3" style={{color: 'var(--text-secondary)'}}>{product.measurement || '-'}</td>
+                                                <td className="px-4 py-3 text-blue-500">₹{product.transport}</td>
+                                                <td className="px-4 py-3">
+                                                    <button onClick={() => onDelete(product.id)} className="px-3 py-1 rounded-lg text-sm font-medium text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Confirmation Modal Component
+        function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Delete", confirmColor = "red" }) {
+            if (!isOpen) return null;
+            
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background: 'rgba(0,0,0,0.5)'}}>
+                    <div className="glass-card rounded-2xl p-6 max-w-md w-full fade-in shadow-2xl">
+                        <div className="text-center mb-4">
+                            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${confirmColor === 'red' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'}`}>
+                                <span className="text-3xl">{confirmColor === 'red' ? '🗑️' : '⚠️'}</span>
+                            </div>
+                            <h3 className="text-xl font-bold" style={{color: 'var(--text-primary)'}}>{title}</h3>
+                            <p className="mt-2" style={{color: 'var(--text-secondary)'}}>{message}</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={onCancel} className="flex-1 py-3 rounded-xl font-semibold transition-all" style={{background: 'var(--bg-tertiary)', color: 'var(--text-primary)'}}>
+                                Cancel
+                            </button>
+                            <button onClick={onConfirm} className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all ${confirmColor === 'red' ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'}`}>
+                                {confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Coupon Management Component
+        function CouponManagement({ coupons, onAdd, onDelete }) {
+            const [showForm, setShowForm] = useState(false);
+            const [form, setForm] = useState({ code: '', type: 'percentage', value: '', minOrder: '0', maxDiscount: '' });
+            const [deleteConfirm, setDeleteConfirm] = useState({ show: false, coupon: null });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (coupons.some(c => c.code.toUpperCase() === form.code.toUpperCase())) { alert('Coupon code already exists!'); return; }
+                onAdd({ ...form, code: form.code.toUpperCase(), value: parseFloat(form.value), minOrder: parseFloat(form.minOrder), maxDiscount: form.maxDiscount ? parseFloat(form.maxDiscount) : null });
+                setForm({ code: '', type: 'percentage', value: '', minOrder: '0', maxDiscount: '' });
+                setShowForm(false);
+            };
+
+            const handleDeleteClick = (coupon) => {
+                setDeleteConfirm({ show: true, coupon });
+            };
+
+            const confirmDelete = () => {
+                if (deleteConfirm.coupon) {
+                    onDelete(deleteConfirm.coupon.id);
+                }
+                setDeleteConfirm({ show: false, coupon: null });
+            };
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <ConfirmModal
+                        isOpen={deleteConfirm.show}
+                        title="Delete Coupon?"
+                        message={`Are you sure you want to delete the coupon "${deleteConfirm.coupon?.code}"? This action cannot be undone.`}
+                        onConfirm={confirmDelete}
+                        onCancel={() => setDeleteConfirm({ show: false, coupon: null })}
+                        confirmText="Delete Coupon"
+                        confirmColor="red"
+                    />
+
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Coupons & Discounts</h2>
+                            <p style={{color: 'var(--text-secondary)'}}>{coupons.length} active coupons</p>
+                        </div>
+                        <button onClick={() => setShowForm(!showForm)} className={`px-4 py-2 rounded-xl font-medium transition-all ${showForm ? 'bg-gray-200 dark:bg-gray-700' : 'btn-primary text-white'}`}>
+                            {showForm ? '✕ Cancel' : '+ Create Coupon'}
+                        </button>
+                    </div>
+
+                    {showForm && (
+                        <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Coupon Code *</label>
+                                    <input type="text" value={form.code} onChange={(e) => setForm({...form, code: e.target.value.toUpperCase()})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none uppercase" placeholder="SAVE20" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Discount Type</label>
+                                    <select value={form.type} onChange={(e) => setForm({...form, type: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none">
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed Amount (₹)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Value *</label>
+                                    <input type="number" value={form.value} onChange={(e) => setForm({...form, value: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder={form.type === 'percentage' ? '20' : '500'} required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Min Order (₹)</label>
+                                    <input type="number" value={form.minOrder} onChange={(e) => setForm({...form, minOrder: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="1000" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2" style={{color: 'var(--text-primary)'}}>Max Discount (₹)</label>
+                                    <input type="number" value={form.maxDiscount} onChange={(e) => setForm({...form, maxDiscount: e.target.value})} className="glass-input w-full px-3 py-2 rounded-xl focus:outline-none" placeholder="Optional" />
+                                </div>
+                            </div>
+                            <button type="submit" className="btn-primary mt-4 px-6 py-2 text-white rounded-xl font-medium">Create Coupon</button>
+                        </form>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {coupons.length === 0 ? (
+                            <div className="glass-card rounded-2xl p-12 text-center col-span-full" style={{color: 'var(--text-muted)'}}>
+                                <span className="text-5xl">🏷️</span>
+                                <p className="mt-3 font-medium">No coupons yet</p>
+                                <p className="text-sm">Create coupons to offer discounts</p>
+                            </div>
+                        ) : (
+                            coupons.map(coupon => (
+                                <div key={coupon.id} className="glass-card rounded-2xl p-5 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-bl-full"></div>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1 rounded-lg font-mono font-bold">{coupon.code}</div>
+                                    </div>
+                                    <div className="text-3xl font-bold mb-2" style={{color: 'var(--text-primary)'}}>
+                                        {coupon.type === 'percentage' ? `${coupon.value}% OFF` : `₹${coupon.value} OFF`}
+                                    </div>
+                                    <div className="text-sm space-y-1 mb-4" style={{color: 'var(--text-secondary)'}}>
+                                        <p>Min order: ₹{coupon.minOrder.toLocaleString()}</p>
+                                        {coupon.maxDiscount && <p>Max discount: ₹{coupon.maxDiscount.toLocaleString()}</p>}
+                                    </div>
+                                    <button 
+                                        onClick={() => handleDeleteClick(coupon)} 
+                                        className="w-full py-2 rounded-xl text-sm font-medium text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <span>🗑️</span> Remove Coupon
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Billing Mode Component
+        function BillingMode({ businessInfo, products, coupons, onComplete, onCancel }) {
+            const { resolvedTheme } = useContext(ThemeContext);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [quantity, setQuantity] = useState(1);
+            const [cart, setCart] = useState([]);
+            const [customerName, setCustomerName] = useState('');
+            const [customerPhone, setCustomerPhone] = useState('');
+            const [showInvoice, setShowInvoice] = useState(false);
+            const [currentBill, setCurrentBill] = useState(null);
+            const [showSuggestions, setShowSuggestions] = useState(false);
+            const [discountType, setDiscountType] = useState('none');
+            const [discountValue, setDiscountValue] = useState('');
+            const [couponCode, setCouponCode] = useState('');
+            const [appliedCoupon, setAppliedCoupon] = useState(null);
+            const [couponError, setCouponError] = useState('');
+            const invoiceRef = useRef(null);
+            const searchInputRef = useRef(null);
+
+            const suggestions = useMemo(() => {
+                if (!searchTerm.trim()) return products.slice(0, 8);
+                const term = searchTerm.toLowerCase();
+                return products.filter(p => p.number.toLowerCase().includes(term) || p.name.toLowerCase().includes(term)).slice(0, 8);
+            }, [searchTerm, products]);
+
+            const addToCart = (product, qty = quantity) => {
+                const existingIndex = cart.findIndex(item => item.product.number === product.number);
+                if (existingIndex >= 0) {
+                    const newCart = [...cart];
+                    newCart[existingIndex].quantity += qty;
+                    setCart(newCart);
+                } else {
+                    setCart([...cart, { product, quantity: qty }]);
+                }
+                setSearchTerm('');
+                setQuantity(1);
+                setShowSuggestions(false);
+                searchInputRef.current?.focus();
+            };
+
+            const handleSearchKeyDown = (e) => {
+                if (e.key === 'Enter' && suggestions.length > 0) addToCart(suggestions[0]);
+            };
+
+            const removeFromCart = (index) => setCart(cart.filter((_, i) => i !== index));
+            const updateQuantity = (index, newQty) => { if (newQty >= 1) { const newCart = [...cart]; newCart[index].quantity = newQty; setCart(newCart); } };
+
+            const applyCoupon = () => {
+                setCouponError('');
+                const coupon = coupons.find(c => c.code === couponCode.toUpperCase());
+                if (!coupon) { setCouponError('Invalid coupon code'); return; }
+                const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+                if (subtotal < coupon.minOrder) { setCouponError(`Min order ₹${coupon.minOrder} required`); return; }
+                setAppliedCoupon(coupon);
+                setDiscountType('coupon');
+                setCouponCode('');
+            };
+
+            const calculateTotals = () => {
+                let subtotal = 0, totalGst = 0, totalTransport = 0;
+                cart.forEach(item => {
+                    const itemTotal = item.product.price * item.quantity;
+                    totalGst += (itemTotal * item.product.gst) / 100;
+                    totalTransport += item.product.transport * item.quantity;
+                    subtotal += itemTotal;
+                });
+
+                let discount = 0;
+                if (discountType === 'percentage' && discountValue) discount = (subtotal * parseFloat(discountValue)) / 100;
+                else if (discountType === 'fixed' && discountValue) discount = parseFloat(discountValue);
+                else if (discountType === 'coupon' && appliedCoupon) {
+                    if (appliedCoupon.type === 'percentage') discount = (subtotal * appliedCoupon.value) / 100;
+                    else discount = appliedCoupon.value;
+                    if (appliedCoupon.maxDiscount) discount = Math.min(discount, appliedCoupon.maxDiscount);
+                }
+
+                return { subtotal, totalGst, totalTransport, discount, grandTotal: Math.max(0, subtotal + totalGst + totalTransport - discount) };
+            };
+
+            const totals = calculateTotals();
+
+            const generateBill = () => {
+                if (cart.length === 0) { alert('Please add items to cart!'); return; }
+                const bill = { customerName, customerPhone, items: cart, subtotal: totals.subtotal, gst: totals.totalGst, transport: totals.totalTransport, discount: totals.discount, discountType, appliedCoupon, total: totals.grandTotal };
+                setCurrentBill(bill);
+                setShowInvoice(true);
+            };
+
+            const downloadPDF = async () => {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const canvas = await html2canvas(invoiceRef.current, { scale: 2, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 10, 10, 190, (canvas.height * 190) / canvas.width);
+                pdf.save(`Invoice_${currentBill.id || Date.now()}.pdf`);
+            };
+
+            if (showInvoice && currentBill) {
+                return (
+                    <div className="min-h-screen p-4" style={{background: resolvedTheme === 'dark' ? '#0f172a' : '#f8fafc'}}>
+                        <div className="max-w-3xl mx-auto">
+                            <div className="mb-4 flex gap-2 flex-wrap no-print">
+                                <button onClick={downloadPDF} className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium">📥 Download PDF</button>
+                                <button onClick={() => window.print()} className="px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-medium">🖨️ Print</button>
+                                <button onClick={() => onComplete(currentBill)} className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition font-medium">✓ Save & Exit</button>
+                            </div>
+
+                            <div ref={invoiceRef} className="invoice-print bg-white rounded-2xl shadow-xl">
+                                <div className="border-b-4 border-indigo-600 pb-6 mb-6">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-start gap-4">
+                                            {businessInfo.logo && <img src={businessInfo.logo} alt="Logo" className="w-16 h-16 object-contain" />}
+                                            <div>
+                                                <h1 className="text-2xl font-bold text-gray-800">{businessInfo.name}</h1>
+                                                <p className="text-gray-600">GSTIN: {businessInfo.gstNo}</p>
+                                                {businessInfo.address && <p className="text-gray-500 text-sm">{businessInfo.address}</p>}
+                                                {businessInfo.phone && <p className="text-gray-500 text-sm">📞 {businessInfo.phone}</p>}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <h2 className="text-2xl font-bold text-indigo-600">TAX INVOICE</h2>
+                                            <p className="text-gray-600 font-mono">#{Date.now().toString().slice(-8)}</p>
+                                            <p className="text-gray-500">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {(customerName || customerPhone) && (
+                                    <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+                                        <p className="font-semibold text-gray-700 mb-1">Bill To:</p>
+                                        {customerName && <p className="text-gray-800 font-medium">{customerName}</p>}
+                                        {customerPhone && <p className="text-gray-600">{customerPhone}</p>}
+                                    </div>
+                                )}
+
+                                <table className="w-full mb-6">
+                                    <thead className="bg-indigo-600 text-white">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left rounded-tl-xl">Item</th>
+                                            <th className="px-4 py-3 text-right">Price</th>
+                                            <th className="px-4 py-3 text-center">Qty</th>
+                                            <th className="px-4 py-3 text-right">GST</th>
+                                            <th className="px-4 py-3 text-right rounded-tr-xl">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentBill.items.map((item, i) => {
+                                            const itemTotal = item.product.price * item.quantity;
+                                            const itemGst = (itemTotal * item.product.gst) / 100;
+                                            return (
+                                                <tr key={i} className="border-b border-gray-200">
+                                                    <td className="px-4 py-3">
+                                                        <p className="font-medium text-gray-800">{item.product.name}</p>
+                                                        <p className="text-sm text-gray-500">#{item.product.number} {item.product.measurement && `• ${item.product.measurement}`}</p>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-gray-700">₹{item.product.price.toLocaleString()}</td>
+                                                    <td className="px-4 py-3 text-center text-gray-700">{item.quantity}</td>
+                                                    <td className="px-4 py-3 text-right text-gray-600">₹{itemGst.toLocaleString()}</td>
+                                                    <td className="px-4 py-3 text-right font-semibold text-gray-800">₹{(itemTotal + itemGst).toLocaleString()}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+
+                                <div className="flex justify-end">
+                                    <div className="w-72 space-y-2">
+                                        <div className="flex justify-between text-gray-600"><span>Subtotal:</span><span>₹{currentBill.subtotal.toLocaleString()}</span></div>
+                                        <div className="flex justify-between text-gray-600"><span>GST:</span><span>₹{currentBill.gst.toLocaleString()}</span></div>
+                                        <div className="flex justify-between text-gray-600"><span>Transport:</span><span>₹{currentBill.transport.toLocaleString()}</span></div>
+                                        {currentBill.discount > 0 && (
+                                            <div className="flex justify-between text-emerald-600">
+                                                <span>Discount {currentBill.appliedCoupon && `(${currentBill.appliedCoupon.code})`}:</span>
+                                                <span>-₹{currentBill.discount.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between pt-3 border-t-2 border-indigo-600 text-xl font-bold">
+                                            <span className="text-gray-800">Grand Total:</span>
+                                            <span className="text-indigo-600">₹{currentBill.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-10 pt-6 border-t text-center text-gray-500 text-sm">
+                                    <p>Thank you for your business! 🙏</p>
+                                    <p className="mt-1">This is a computer-generated invoice.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen p-4" style={{background: resolvedTheme === 'dark' ? 'linear-gradient(135deg, #0f172a, #1e1b4b)' : 'linear-gradient(135deg, #eef2ff, #e0e7ff)'}}>
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 className="text-2xl font-bold flex items-center gap-2" style={{color: 'var(--text-primary)'}}>
+                                    <span className="text-3xl">⚡</span> Quick Billing
+                                </h1>
+                                <p style={{color: 'var(--text-secondary)'}}>Fast and efficient billing</p>
+                            </div>
+                            <button onClick={onCancel} className="px-4 py-2 rounded-xl font-medium text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition">✕ Cancel</button>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Left - Search & Quick Add */}
+                            <div className="space-y-4">
+                                <div className="glass-card rounded-2xl p-5">
+                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{color: 'var(--text-primary)'}}>🔍 Search Products</h3>
+                                    <div className="space-y-3">
+                                        <div className="relative">
+                                            <input
+                                                ref={searchInputRef}
+                                                type="text"
+                                                value={searchTerm}
+                                                onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); }}
+                                                onFocus={() => setShowSuggestions(true)}
+                                                onKeyDown={handleSearchKeyDown}
+                                                className="glass-input w-full px-4 py-3 rounded-xl text-lg focus:outline-none"
+                                                placeholder="Type # or name..."
+                                                autoFocus
+                                            />
+                                            {showSuggestions && suggestions.length > 0 && (
+                                                <div className="absolute z-20 w-full mt-2 glass-card rounded-xl shadow-xl max-h-64 overflow-y-auto">
+                                                    {suggestions.map((product, index) => (
+                                                        <div key={product.id} onClick={() => addToCart(product)}
+                                                            className={`flex items-center gap-3 p-3 cursor-pointer suggestion-item ${index === 0 ? 'bg-emerald-50 dark:bg-emerald-900/30' : ''}`}
+                                                            style={{borderBottom: '1px solid var(--border-color)'}}>
+                                                            {product.image ? <img src={product.image} alt="" className="w-10 h-10 object-cover rounded-lg" /> : <span className="text-2xl">{product.emoji || '📦'}</span>}
+                                                            <div className="flex-1">
+                                                                <p className="font-medium" style={{color: 'var(--text-primary)'}}>{product.name}</p>
+                                                                <p className="text-sm" style={{color: 'var(--text-muted)'}}>#{product.number}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-emerald-500 font-bold">₹{product.price.toLocaleString()}</p>
+                                                                {index === 0 && <p className="text-xs text-emerald-500">↵ Enter</p>}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2 items-center">
+                                            <label className="text-sm font-medium" style={{color: 'var(--text-secondary)'}}>Qty:</label>
+                                            <input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)} min="1" className="glass-input w-20 px-3 py-2 rounded-xl text-center focus:outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="glass-card rounded-2xl p-5">
+                                    <h4 className="text-sm font-semibold mb-3" style={{color: 'var(--text-secondary)'}}>⚡ Quick Add</h4>
+                                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                                        {products.slice(0, 8).map(product => (
+                                            <button key={product.id} onClick={() => addToCart(product, 1)} className="quick-add-btn flex items-center gap-2 p-2 rounded-xl text-left" style={{background: 'var(--bg-tertiary)'}}>
+                                                {product.image ? <img src={product.image} alt="" className="w-8 h-8 object-cover rounded-lg" /> : <span className="text-lg">{product.emoji || '📦'}</span>}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs truncate" style={{color: 'var(--text-primary)'}}>{product.name}</p>
+                                                    <p className="text-xs text-emerald-500 font-semibold">₹{product.price}</p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="glass-card rounded-2xl p-5">
+                                    <h4 className="text-sm font-semibold mb-3" style={{color: 'var(--text-secondary)'}}>👤 Customer (Optional)</h4>
+                                    <div className="space-y-2">
+                                        <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none" placeholder="Customer Name" />
+                                        <input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none" placeholder="Phone Number" />
+                                    </div>
+                                </div>
+
+                                {/* Discount Section */}
+                                <div className="glass-card rounded-2xl p-5">
+                                    <h4 className="text-sm font-semibold mb-3" style={{color: 'var(--text-secondary)'}}>🏷️ Discount (Optional)</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <select value={discountType} onChange={(e) => { setDiscountType(e.target.value); setAppliedCoupon(null); setDiscountValue(''); }} className="glass-input flex-1 px-3 py-2 rounded-xl text-sm focus:outline-none">
+                                                <option value="none">No Discount</option>
+                                                <option value="percentage">Percentage (%)</option>
+                                                <option value="fixed">Fixed (₹)</option>
+                                                <option value="coupon">Apply Coupon</option>
+                                            </select>
+                                        </div>
+                                        {discountType === 'percentage' && (
+                                            <div className="space-y-2">
+                                                <input type="number" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none" placeholder="Enter percentage (e.g., 10)" max="100" />
+                                                {discountValue && parseFloat(discountValue) > 0 && (
+                                                    <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-amber-600 dark:text-amber-400 font-medium text-sm">💰 {discountValue}% discount applied</span>
+                                                            <button 
+                                                                onClick={() => { setDiscountValue(''); setDiscountType('none'); }} 
+                                                                className="text-red-500 text-xs font-medium hover:underline"
+                                                            >
+                                                                Clear
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        {discountType === 'fixed' && (
+                                            <div className="space-y-2">
+                                                <input type="number" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} className="glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none" placeholder="Enter amount (e.g., 500)" />
+                                                {discountValue && parseFloat(discountValue) > 0 && (
+                                                    <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-amber-600 dark:text-amber-400 font-medium text-sm">💰 ₹{parseFloat(discountValue).toLocaleString()} discount applied</span>
+                                                            <button 
+                                                                onClick={() => { setDiscountValue(''); setDiscountType('none'); }} 
+                                                                className="text-red-500 text-xs font-medium hover:underline"
+                                                            >
+                                                                Clear
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        {discountType === 'coupon' && !appliedCoupon && (
+                                            <div>
+                                                <div className="flex gap-2">
+                                                    <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} className="glass-input flex-1 px-3 py-2 rounded-xl text-sm focus:outline-none uppercase" placeholder="Enter code" />
+                                                    <button onClick={applyCoupon} className="px-4 py-2 bg-indigo-500 text-white rounded-xl text-sm font-medium hover:bg-indigo-600 transition">Apply</button>
+                                                </div>
+                                                {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
+                                            </div>
+                                        )}
+                                        {appliedCoupon && (
+                                            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg">🎉</span>
+                                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">{appliedCoupon.code}</span>
+                                                    </div>
+                                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                                        {appliedCoupon.type === 'percentage' ? `${appliedCoupon.value}% OFF` : `₹${appliedCoupon.value} OFF`}
+                                                    </span>
+                                                </div>
+                                                <button 
+                                                    onClick={() => { setAppliedCoupon(null); setDiscountType('none'); }} 
+                                                    className="w-full py-2 rounded-lg text-sm font-medium text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all flex items-center justify-center gap-1"
+                                                >
+                                                    <span>✕</span> Remove Coupon
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right - Cart */}
+                            <div className="lg:col-span-2">
+                                <div className="glass-card rounded-2xl p-6 h-full flex flex-col">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: 'var(--text-primary)'}}>🛒 Current Bill</h3>
+                                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">{cart.length} items</span>
+                                    </div>
+                                    
+                                    {cart.length === 0 ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center py-12" style={{color: 'var(--text-muted)'}}>
+                                            <span className="text-6xl mb-4">🛒</span>
+                                            <p className="font-medium">Cart is empty</p>
+                                            <p className="text-sm">Search or click products to add</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex-1 overflow-y-auto mb-4 max-h-80">
+                                                <table className="w-full">
+                                                    <thead className="sticky top-0" style={{background: 'var(--bg-secondary)'}}>
+                                                        <tr style={{borderBottom: '1px solid var(--border-color)'}}>
+                                                            <th className="px-2 py-2 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Product</th>
+                                                            <th className="px-2 py-2 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Price</th>
+                                                            <th className="px-2 py-2 text-center text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Qty</th>
+                                                            <th className="px-2 py-2 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Total</th>
+                                                            <th className="px-2 py-2"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {cart.map((item, index) => {
+                                                            const itemTotal = item.product.price * item.quantity;
+                                                            const itemGst = (itemTotal * item.product.gst) / 100;
+                                                            return (
+                                                                <tr key={index} style={{borderBottom: '1px solid var(--border-color)'}}>
+                                                                    <td className="px-2 py-3">
+                                                                        <div className="flex items-center gap-2">
+                                                                            {item.product.image ? <img src={item.product.image} alt="" className="w-10 h-10 object-cover rounded-lg" /> : <span className="text-xl">{item.product.emoji || '📦'}</span>}
+                                                                            <div>
+                                                                                <p className="text-sm font-medium" style={{color: 'var(--text-primary)'}}>{item.product.name}</p>
+                                                                                <p className="text-xs" style={{color: 'var(--text-muted)'}}>#{item.product.number}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-2 py-3 text-right text-sm" style={{color: 'var(--text-secondary)'}}>₹{item.product.price.toLocaleString()}</td>
+                                                                    <td className="px-2 py-3">
+                                                                        <div className="flex items-center justify-center gap-1">
+                                                                            <button onClick={() => updateQuantity(index, item.quantity - 1)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition" style={{background: 'var(--bg-tertiary)'}}>−</button>
+                                                                            <span className="w-8 text-center text-sm font-medium" style={{color: 'var(--text-primary)'}}>{item.quantity}</span>
+                                                                            <button onClick={() => updateQuantity(index, item.quantity + 1)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-500 transition" style={{background: 'var(--bg-tertiary)'}}>+</button>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-2 py-3 text-right text-sm font-semibold text-emerald-500">₹{(itemTotal + itemGst).toLocaleString()}</td>
+                                                                    <td className="px-2 py-3">
+                                                                        <button onClick={() => removeFromCart(index)} className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 rounded-lg transition">✕</button>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <div className="pt-4" style={{borderTop: '1px solid var(--border-color)'}}>
+                                                <div className="flex justify-between items-end">
+                                                    <div className="text-sm space-y-1" style={{color: 'var(--text-secondary)'}}>
+                                                        <p>Subtotal: ₹{totals.subtotal.toLocaleString()}</p>
+                                                        <p>GST: ₹{totals.totalGst.toLocaleString()}</p>
+                                                        <p>Transport: ₹{totals.totalTransport.toLocaleString()}</p>
+                                                        {totals.discount > 0 && <p className="text-emerald-500">Discount: -₹{totals.discount.toLocaleString()}</p>}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm" style={{color: 'var(--text-muted)'}}>Grand Total</p>
+                                                        <p className="text-3xl font-bold text-emerald-500">₹{totals.grandTotal.toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+
+                                                <button onClick={generateBill} className="w-full mt-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-2xl font-bold text-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                                                    <span className="text-2xl">🧾</span> Generate Invoice
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Bill History Component
+        function BillHistory({ bills, businessInfo, onDelete }) {
+            const { resolvedTheme } = useContext(ThemeContext);
+            const [selectedBill, setSelectedBill] = useState(null);
+            const invoiceRef = useRef(null);
+
+            const downloadPDF = async () => {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const canvas = await html2canvas(invoiceRef.current, { scale: 2, backgroundColor: '#ffffff' });
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 190, (canvas.height * 190) / canvas.width);
+                pdf.save(`Invoice_${selectedBill.id}.pdf`);
+            };
+
+            if (selectedBill) {
+                return (
+                    <div className="space-y-4 fade-in">
+                        <div className="flex gap-2 flex-wrap">
+                            <button onClick={() => setSelectedBill(null)} className="px-4 py-2 rounded-xl font-medium" style={{background: 'var(--bg-tertiary)', color: 'var(--text-primary)'}}>← Back</button>
+                            <button onClick={downloadPDF} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium">📥 Download PDF</button>
+                        </div>
+                        <div ref={invoiceRef} className="invoice-print bg-white rounded-2xl shadow-xl max-w-3xl">
+                            <div className="border-b-4 border-indigo-600 pb-6 mb-6">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-start gap-4">
+                                        {businessInfo.logo && <img src={businessInfo.logo} alt="Logo" className="w-16 h-16 object-contain" />}
+                                        <div>
+                                            <h1 className="text-2xl font-bold text-gray-800">{businessInfo.name}</h1>
+                                            <p className="text-gray-600">GSTIN: {businessInfo.gstNo}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <h2 className="text-xl font-bold text-indigo-600">INVOICE</h2>
+                                        <p className="text-gray-600">#{selectedBill.id.toString().slice(-8)}</p>
+                                        <p className="text-gray-500">{new Date(selectedBill.date).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {selectedBill.customerName && <div className="mb-4 p-3 bg-gray-50 rounded-xl"><p className="font-semibold text-gray-700">Bill To:</p><p className="text-gray-800">{selectedBill.customerName}</p>{selectedBill.customerPhone && <p className="text-gray-600">{selectedBill.customerPhone}</p>}</div>}
+                            <table className="w-full mb-4">
+                                <thead className="bg-indigo-600 text-white"><tr><th className="px-3 py-2 text-left">Item</th><th className="px-3 py-2 text-right">Price</th><th className="px-3 py-2 text-right">Qty</th><th className="px-3 py-2 text-right">Total</th></tr></thead>
+                                <tbody>{selectedBill.items.map((item, i) => (<tr key={i} className="border-b"><td className="px-3 py-2">{item.product.name}</td><td className="px-3 py-2 text-right">₹{item.product.price.toLocaleString()}</td><td className="px-3 py-2 text-right">{item.quantity}</td><td className="px-3 py-2 text-right">₹{(item.product.price * item.quantity).toLocaleString()}</td></tr>))}</tbody>
+                            </table>
+                            <div className="flex justify-end">
+                                <div className="w-64 space-y-1">
+                                    <div className="flex justify-between"><span>Subtotal:</span><span>₹{selectedBill.subtotal.toLocaleString()}</span></div>
+                                    <div className="flex justify-between"><span>GST:</span><span>₹{selectedBill.gst.toLocaleString()}</span></div>
+                                    <div className="flex justify-between"><span>Transport:</span><span>₹{selectedBill.transport.toLocaleString()}</span></div>
+                                    {selectedBill.discount > 0 && <div className="flex justify-between text-emerald-600"><span>Discount:</span><span>-₹{selectedBill.discount.toLocaleString()}</span></div>}
+                                    <div className="flex justify-between pt-2 border-t-2 font-bold text-lg"><span>Total:</span><span className="text-indigo-600">₹{selectedBill.total.toLocaleString()}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div><h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Bill History</h2><p style={{color: 'var(--text-secondary)'}}>{bills.length} bills recorded</p></div>
+                    {bills.length === 0 ? (
+                        <div className="glass-card rounded-2xl p-12 text-center" style={{color: 'var(--text-muted)'}}><span className="text-5xl">📋</span><p className="mt-3 font-medium">No bills yet</p></div>
+                    ) : (
+                        <div className="glass-card rounded-2xl overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead style={{background: 'var(--bg-tertiary)'}}><tr>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Bill ID</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Date</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Customer</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Items</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Total</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Actions</th>
+                                    </tr></thead>
+                                    <tbody>
+                                        {bills.slice().reverse().map(bill => (
+                                            <tr key={bill.id} className="table-row" style={{borderTop: '1px solid var(--border-color)'}}>
+                                                <td className="px-4 py-3 font-mono font-semibold" style={{color: 'var(--text-primary)'}}>#{bill.id.toString().slice(-6)}</td>
+                                                <td className="px-4 py-3" style={{color: 'var(--text-secondary)'}}>{new Date(bill.date).toLocaleDateString()}</td>
+                                                <td className="px-4 py-3" style={{color: 'var(--text-secondary)'}}>{bill.customerName || '-'}</td>
+                                                <td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs font-medium" style={{background: 'var(--bg-tertiary)', color: 'var(--text-secondary)'}}>{bill.items.length} items</span></td>
+                                                <td className="px-4 py-3 text-right text-emerald-500 font-bold">₹{bill.total.toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <button onClick={() => setSelectedBill(bill)} className="px-3 py-1 rounded-lg text-sm font-medium text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition mr-2">View</button>
+                                                    <button onClick={() => onDelete(bill.id)} className="px-3 py-1 rounded-lg text-sm font-medium text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Reports Component
+        function Reports({ bills }) {
+            const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+            const years = [...new Set(bills.map(b => new Date(b.date).getFullYear()))];
+            if (!years.includes(selectedYear)) years.push(selectedYear);
+            years.sort((a, b) => b - a);
+
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const monthlyData = months.map((month, index) => {
+                const monthBills = bills.filter(b => { const d = new Date(b.date); return d.getFullYear() === selectedYear && d.getMonth() === index; });
+                return { month, count: monthBills.length, total: monthBills.reduce((sum, b) => sum + b.total, 0) };
+            });
+
+            const annualTotal = monthlyData.reduce((sum, m) => sum + m.total, 0);
+            const annualCount = monthlyData.reduce((sum, m) => sum + m.count, 0);
+            const maxMonthly = Math.max(...monthlyData.map(m => m.total), 1);
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div><h2 className="text-2xl font-bold" style={{color: 'var(--text-primary)'}}>Reports & Analytics</h2><p style={{color: 'var(--text-secondary)'}}>Track your business performance</p></div>
+                        <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="glass-input px-4 py-2 rounded-xl focus:outline-none">{years.map(year => <option key={year} value={year}>{year}</option>)}</select>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-lg"><p className="text-white/80 text-sm font-medium">Annual Turnover</p><p className="text-3xl font-bold text-white">₹{annualTotal.toLocaleString()}</p></div>
+                        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 shadow-lg"><p className="text-white/80 text-sm font-medium">Total Bills</p><p className="text-3xl font-bold text-white">{annualCount}</p></div>
+                        <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 shadow-lg"><p className="text-white/80 text-sm font-medium">Average Bill</p><p className="text-3xl font-bold text-white">₹{annualCount > 0 ? Math.round(annualTotal / annualCount).toLocaleString() : 0}</p></div>
+                    </div>
+
+                    <div className="glass-card rounded-2xl p-6">
+                        <h3 className="text-lg font-semibold mb-6" style={{color: 'var(--text-primary)'}}>📊 Monthly Performance</h3>
+                        <div className="space-y-3">
+                            {monthlyData.map((data, index) => (
+                                <div key={index} className="flex items-center gap-4">
+                                    <div className="w-12 text-sm font-medium" style={{color: 'var(--text-secondary)'}}>{data.month.slice(0, 3)}</div>
+                                    <div className="flex-1 h-8 rounded-full overflow-hidden" style={{background: 'var(--bg-tertiary)'}}>
+                                        <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${(data.total / maxMonthly) * 100}%` }} />
+                                    </div>
+                                    <div className="w-36 text-right">
+                                        <span className="text-emerald-500 font-semibold">₹{data.total.toLocaleString()}</span>
+                                        <span className="text-sm ml-2" style={{color: 'var(--text-muted)'}}>({data.count})</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="glass-card rounded-2xl p-6">
+                        <h3 className="text-lg font-semibold mb-4" style={{color: 'var(--text-primary)'}}>📋 Monthly Summary</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead style={{borderBottom: '1px solid var(--border-color)'}}><tr>
+                                    <th className="px-4 py-2 text-left text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Month</th>
+                                    <th className="px-4 py-2 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Bills</th>
+                                    <th className="px-4 py-2 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Revenue</th>
+                                    <th className="px-4 py-2 text-right text-sm font-semibold" style={{color: 'var(--text-secondary)'}}>Avg/Bill</th>
+                                </tr></thead>
+                                <tbody>
+                                    {monthlyData.map((data, index) => (
+                                        <tr key={index} style={{borderBottom: '1px solid var(--border-color)'}}>
+                                            <td className="px-4 py-2" style={{color: 'var(--text-primary)'}}>{data.month}</td>
+                                            <td className="px-4 py-2 text-right" style={{color: 'var(--text-secondary)'}}>{data.count}</td>
+                                            <td className="px-4 py-2 text-right text-emerald-500 font-medium">₹{data.total.toLocaleString()}</td>
+                                            <td className="px-4 py-2 text-right" style={{color: 'var(--text-secondary)'}}>₹{data.count > 0 ? Math.round(data.total / data.count).toLocaleString() : 0}</td>
+                                        </tr>
+                                    ))}
+                                    <tr style={{background: 'var(--bg-tertiary)'}} className="font-semibold">
+                                        <td className="px-4 py-2" style={{color: 'var(--text-primary)'}}>Total</td>
+                                        <td className="px-4 py-2 text-right" style={{color: 'var(--text-primary)'}}>{annualCount}</td>
+                                        <td className="px-4 py-2 text-right text-emerald-500">₹{annualTotal.toLocaleString()}</td>
+                                        <td className="px-4 py-2 text-right" style={{color: 'var(--text-primary)'}}>₹{annualCount > 0 ? Math.round(annualTotal / annualCount).toLocaleString() : 0}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
